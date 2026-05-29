@@ -1,4 +1,6 @@
 import { NavLink } from "react-router-dom";
+import { NotificationBell } from "../notifications/NotificationBell";
+import { useNotifications } from "../../hooks/useNotifications";
 
 const navItemClass = ({ isActive }) =>
   `rounded-full px-4 py-2 text-sm font-medium transition ${
@@ -8,6 +10,8 @@ const navItemClass = ({ isActive }) =>
   }`;
 
 export function AppShell({ children }) {
+  const { unreadCount, connectionStatus } = useNotifications();
+
   return (
     <div className="min-h-screen px-4 py-6 text-slate-900 sm:px-6 lg:px-8">
       <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-7xl flex-col rounded-[32px] border border-white/70 bg-white/65 shadow-soft backdrop-blur">
@@ -32,6 +36,10 @@ export function AppShell({ children }) {
             <NavLink to="/notifications" className={navItemClass}>
               Notifications
             </NavLink>
+            <NotificationBell
+              unreadCount={unreadCount}
+              connectionStatus={connectionStatus}
+            />
           </nav>
         </header>
 
