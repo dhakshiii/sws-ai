@@ -31,6 +31,18 @@ function isPdfFile(file) {
   );
 }
 
+function normalizeDocuments(payload) {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (Array.isArray(payload?.documents)) {
+    return payload.documents;
+  }
+
+  return [];
+}
+
 export function DashboardPage() {
   const [documents, setDocuments] = useState([]);
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(true);
@@ -47,7 +59,20 @@ export function DashboardPage() {
     try {
       setIsLoadingDocuments(true);
       const data = await fetchDocuments();
-      setDocuments(data);
+      const normalizedDocuments = normalizeDocuments(data);
+      setDocuments(normalizedDocuments);
+      setStatusBanner((current) =>
+        current?.type === "error" &&
+        current.message === "Backend is not reachable yet. Start Spring Boot on port 8080."
+          ? null
+          : current
+      );
+    } catch (error) {
+      console.error("Failed to load documents:", error);
+      setStatusBanner({
+        type: "error",
+        message: "Backend is not reachable yet. Start Spring Boot on port 8080."
+      });
     } finally {
       setIsLoadingDocuments(false);
     }
@@ -83,7 +108,7 @@ export function DashboardPage() {
       setIsBulkMode(true);
       setStatusBanner({
         type: "info",
-        message: `Upload in progress — processing ${validItems.length} files in background.`
+        message: `Upload in progress - processing ${validItems.length} files in background.`
       });
       setQueueCollapsed(true);
     } else {
@@ -163,9 +188,10 @@ export function DashboardPage() {
   }
 
   const stats = useMemo(() => {
-    const total = documents.length;
-    const totalSize = documents.reduce(
-      (accumulator, document) => accumulator + document.fileSize,
+    const safeDocuments = Array.isArray(documents) ? documents : [];
+    const total = safeDocuments.length;
+    const totalSize = safeDocuments.reduce(
+      (accumulator, document) => accumulator + (Number(document.fileSize) || 0),
       0
     );
 

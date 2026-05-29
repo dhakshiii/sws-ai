@@ -2,6 +2,8 @@ import { getDownloadUrl } from "../../api/documents";
 import { formatDateTime, formatFileSize, titleCase } from "../../utils/formatters";
 
 export function DocumentsTable({ documents, isLoading }) {
+  const safeDocuments = Array.isArray(documents) ? documents : [];
+
   return (
     <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-soft">
       <div className="flex items-center justify-between gap-4">
@@ -14,7 +16,7 @@ export function DocumentsTable({ documents, isLoading }) {
           </h3>
         </div>
         <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700">
-          {documents.length} files
+          {safeDocuments.length} files
         </span>
       </div>
 
@@ -22,7 +24,7 @@ export function DocumentsTable({ documents, isLoading }) {
         <div className="mt-6 rounded-[24px] bg-slate-50 px-5 py-10 text-center text-sm text-slate-500">
           Loading documents...
         </div>
-      ) : documents.length ? (
+      ) : safeDocuments.length ? (
         <div className="mt-6 overflow-hidden rounded-[24px] border border-slate-200">
           <div className="hidden grid-cols-[2.2fr_1fr_1.4fr_1fr_1fr] gap-4 bg-slate-950 px-5 py-4 text-xs font-semibold uppercase tracking-[0.2em] text-slate-300 md:grid">
             <span>Name</span>
@@ -33,16 +35,18 @@ export function DocumentsTable({ documents, isLoading }) {
           </div>
 
           <div className="divide-y divide-slate-200">
-            {documents.map((document) => (
+            {safeDocuments.map((document) => (
               <div
                 key={document.id}
                 className="grid gap-3 px-5 py-5 md:grid-cols-[2.2fr_1fr_1.4fr_1fr_1fr] md:items-center"
               >
                 <div>
                   <p className="text-sm font-semibold text-slate-950">
-                    {document.fileName}
+                    {document.fileName || "Untitled document"}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">{document.fileType}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {document.fileType || "application/pdf"}
+                  </p>
                 </div>
                 <p className="text-sm text-slate-600">
                   {formatFileSize(document.fileSize)}
@@ -55,6 +59,7 @@ export function DocumentsTable({ documents, isLoading }) {
                 </span>
                 <a
                   href={getDownloadUrl(document.downloadUrl)}
+                  aria-disabled={!document.downloadUrl}
                   className="w-fit rounded-full border border-brand-300 px-4 py-2 text-sm font-medium text-brand-700 transition hover:border-brand-500 hover:bg-brand-50"
                 >
                   Download

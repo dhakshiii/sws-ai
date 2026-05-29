@@ -31,6 +31,10 @@ export function formatDateTime(value) {
 }
 
 export function titleCase(value) {
+  if (typeof value !== "string" || !value.trim()) {
+    return "-";
+  }
+
   return value
     .toLowerCase()
     .split("_")

@@ -1,3 +1,5 @@
 .m2/
 .tools/
 .vscode/
+.tmp-edge/
+*.log

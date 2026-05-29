@@ -33,6 +33,10 @@ export async function uploadDocument(file, { batchId, batchTotal }, onProgress) 
 }
 
 export function getDownloadUrl(downloadPath) {
+  if (!downloadPath) {
+    return "#";
+  }
+
   if (downloadPath.startsWith("http")) {
     return downloadPath;
   }

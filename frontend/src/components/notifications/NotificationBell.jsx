@@ -20,8 +20,8 @@ export function NotificationBell({ unreadCount, connectionStatus }) {
       to="/notifications"
       className="relative flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-brand-200 hover:text-brand-700"
     >
-      <span className="text-lg" aria-hidden="true">
-        🔔
+      <span className="text-sm font-semibold" aria-hidden="true">
+        Bell
       </span>
       <span>Notifications</span>
       <span className="flex items-center gap-2 text-xs text-slate-500">

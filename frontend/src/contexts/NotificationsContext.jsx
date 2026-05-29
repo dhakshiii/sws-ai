@@ -1,5 +1,3 @@
-import { Client } from "@stomp/stompjs";
-import SockJS from "sockjs-client";
 import {
   createContext,
   useContext,
@@ -36,6 +34,11 @@ export function NotificationsProvider({ children }) {
         if (isMounted) {
           setNotifications(sortNotifications(data));
         }
+      } catch (error) {
+        console.error("Failed to load notifications:", error);
+        if (isMounted) {
+          setConnectionStatus("offline");
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -51,35 +54,65 @@ export function NotificationsProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    const client = new Client({
-      webSocketFactory: () => new SockJS(websocketUrl),
-      reconnectDelay: 5000,
-      debug: () => {}
-    });
+    let client;
+    let isCancelled = false;
 
-    client.onConnect = () => {
-      setConnectionStatus("connected");
-      client.subscribe("/topic/notifications", (message) => {
-        const notification = JSON.parse(message.body);
-        setNotifications((current) => {
-          const deduped = current.filter((item) => item.id !== notification.id);
-          return sortNotifications([notification, ...deduped]);
+    async function connectWebsocket() {
+      try {
+        const [{ Client }, sockJsModule] = await Promise.all([
+          import("@stomp/stompjs"),
+          import("sockjs-client")
+        ]);
+
+        if (isCancelled) {
+          return;
+        }
+
+        const SockJS = sockJsModule.default;
+
+        client = new Client({
+          webSocketFactory: () => new SockJS(websocketUrl),
+          reconnectDelay: 5000,
+          debug: () => {}
         });
-      });
-    };
 
-    client.onStompError = () => {
-      setConnectionStatus("error");
-    };
+        client.onConnect = () => {
+          setConnectionStatus("connected");
+          client.subscribe("/topic/notifications", (message) => {
+            const notification = JSON.parse(message.body);
+            setNotifications((current) => {
+              const deduped = current.filter((item) => item.id !== notification.id);
+              return sortNotifications([notification, ...deduped]);
+            });
+          });
+        };
 
-    client.onWebSocketClose = () => {
-      setConnectionStatus("disconnected");
-    };
+        client.onStompError = () => {
+          setConnectionStatus("error");
+        };
 
-    client.activate();
+        client.onWebSocketError = () => {
+          setConnectionStatus("offline");
+        };
+
+        client.onWebSocketClose = () => {
+          setConnectionStatus("disconnected");
+        };
+
+        client.activate();
+      } catch (error) {
+        console.error("Failed to initialize websocket client:", error);
+        if (!isCancelled) {
+          setConnectionStatus("offline");
+        }
+      }
+    }
+
+    connectWebsocket();
 
     return () => {
-      client.deactivate();
+      isCancelled = true;
+      client?.deactivate();
     };
   }, []);
 
